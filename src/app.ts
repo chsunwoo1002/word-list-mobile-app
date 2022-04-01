@@ -1,10 +1,12 @@
 import express from "express";
-const app = express();
-const port = 3000;
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
+const app = express();
+const port = 4444;
+
+app.post("/api/user/registration/:emailAdress");
+app.get("api/user/login/:emailAdress/:hashPassword");
+app.get("api/word/all/:userId");
+app.post("api/word/");
 
 app.get("/api/dictionary/definition/:language/:word", (req, res) => {
   const { language, word } = req.params;
