@@ -1,17 +1,14 @@
-import express from "express";
-const app = express();
-const port = 3000;
+import express, {Express, Request, Response} from 'express';
+import dotenv from 'dotenv';
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
+dotenv.config();
 
-app.get("/api/dictionary/definition/:language/:word", (req, res) => {
-  const { language, word } = req.params;
-  console.log(word);
-  console.log(language);
-  res.send("Testing");
+const app: Express = express();
+const port = process.env.PORT;
+
+app.get('/', (req: Request, res: Response) => {
+  res.send('Express + TypeScript Server');
 });
 app.listen(port, () => {
-  return console.log(`Express is listening at http://localhost:${port}`);
+  console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
 });
