@@ -1,32 +1,33 @@
 import express, {Express} from 'express';
 import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
-import {loginModel} from '../../model/user';
 import bcrypt from 'bcrypt';
+import {loginModel} from '../../model/user';
 
 const authController: Express = express();
-
-/*
-'api/auth/v1/register
-method: Post
-headers: {
-  'content-Type: 'application/json'
-}
-body: JSON.stringify ({
-  username, password
-})
-*/
-type A = Awaited<Promise<string>>;
+const saltRound = 10;
 
 mongoose.connect('mongodb://localhost:27017/login-app-db');
-const saltRound = 10;
 authController.use(bodyParser.json());
 
 authController.post('/v1/register', (req, res) => {
-  const {username, password} = req.body;
-  const salt = async () => await bcrypt.genSalt(saltRound);
-  const hash = async () => await bcrypt.hash(password, salt);
-  console.log(hash);
+  const {username, pass} = req.body;
+
+  // check username, password type -> fail return error message error: 'Invalid username'
+  // check password following rule
+  (async () => {
+    const password = await bcrypt.hash(pass, saltRound);
+    try {
+      const response = await loginModel.create({
+        username,
+        password,
+      });
+    } catch (error) {
+      //if (error.code === 11000) , error: 'Username already in use'
+      return res.json({status: 'error'});
+    }
+    return res.json({status: 'ok'});
+  })();
 });
 
 export {authController};
