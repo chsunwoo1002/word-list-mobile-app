@@ -1,4 +1,5 @@
 import PasswordValidator from 'password-validator';
+import * as EmailValidator from 'email-validator';
 
 /**
  * valid password
@@ -6,7 +7,7 @@ import PasswordValidator from 'password-validator';
  * not contains space
  */
 
-const validatePassword = (pass:string) => {
+const validatePasswordRule = (pass:string) => {
   const schema = new PasswordValidator();
   schema
       .is().min(8)
@@ -17,4 +18,12 @@ const validatePassword = (pass:string) => {
   return schema.validate(pass);
 };
 
-export {validatePassword};
+const isValidPassword = (pass: any) => {
+  return pass || typeof pass === 'string' || validatePasswordRule(pass);
+};
+
+const isValidEmail = (email: any) => {
+  return email || typeof email === 'string' || EmailValidator.validate(email);
+};
+
+export {isValidPassword, isValidEmail};
