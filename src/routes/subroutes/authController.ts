@@ -2,12 +2,16 @@ import express, {Express} from 'express';
 import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
 import {loginModel} from '../../model/user';
-import {isValidPassword, isValidEmail} from '../utils/authUtils';
+import {isValidPassword, isValidEmail} from '../../utils/authUtils';
+
+dotenv.config();
 
 const authController: Express = express();
 const saltRound = 10;
 
+// Change to env val
 mongoose.connect('mongodb://localhost:27017/login-app-db');
 authController.use(bodyParser.json());
 

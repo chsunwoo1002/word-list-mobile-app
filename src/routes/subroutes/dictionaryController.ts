@@ -1,5 +1,5 @@
 import express, {Express} from 'express';
-import {isValidQuery} from '../utils/dictionaryUtils';
+import {isValidQuery} from '../../utils/dictionaryUtils';
 
 const dictionaryController: Express = express();
 
