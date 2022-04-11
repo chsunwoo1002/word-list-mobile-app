@@ -1,32 +1,31 @@
 import express, {Express} from 'express';
-import {isValidQuery} from '../../utils/dictionaryUtils';
+import bodyParser from 'body-parser';
+import {isValidDictionaryQuery} from '../../utils/dictionaryUtils';
 
 const dictionaryController: Express = express();
+dictionaryController.use(bodyParser.json());
 
-dictionaryController.get('/v1/definition/:language/:word', (req, res) => {
-  const language = req.query.language as string;
-  const word = req.query.language as string;
-  if (isValidQuery(language, word)) {
+dictionaryController.get('/v1/definition/', (req, res) => {
+  const {language, word} = req.body;
+  if (isValidDictionaryQuery(language, word)) {
     console.log();
   } else {
     console.log();
   }
 });
 
-dictionaryController.get('/v1/synonyms/:language/:word', (req, res) => {
-  const language = req.query.language as string;
-  const word = req.query.language as string;
-  if (isValidQuery(language, word)) {
+dictionaryController.get('/v1/synonyms/', (req, res) => {
+  const {language, word} = req.body;
+  if (isValidDictionaryQuery(language, word)) {
     console.log();
   } else {
     console.log();
   }
 });
 
-dictionaryController.get('/v1/antonyms/:language/:word', (req, res) => {
-  const language = req.query.language as string;
-  const word = req.query.language as string;
-  if (isValidQuery(language, word)) {
+dictionaryController.get('/v1/antonyms/', (req, res) => {
+  const {language, word} = req.body;
+  if (isValidDictionaryQuery(language, word)) {
     console.log();
   } else {
     console.log();
