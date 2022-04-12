@@ -7,10 +7,16 @@ const opts = {
   },
   collection: 'users',
 };
+const UserWordSchema = new mongoose.Schema({
+  word: {type: String, required: true, unique: true},
+  examples: {type: [String]},
+});
 
 const UserSchema = new mongoose.Schema({
   username: {type: String, required: true, unique: true},
   password: {type: String, required: true},
+  favourite: {type: [UserWordSchema], required: true},
+  memorized: {type: [UserWordSchema], required: true},
 }, opts);
 
 const loginModel = mongoose.model('UserSchema', UserSchema);

@@ -12,7 +12,7 @@ const authController: Express = express();
 const saltRound = 10;
 
 // Change to env val
-mongoose.connect('mongodb://localhost:27017/login-app-db');
+mongoose.connect('mongodb://localhost:27017/app-db');
 authController.use(bodyParser.json());
 
 authController.post('/v1/login', async (req, res) => {
@@ -45,6 +45,8 @@ authController.post('/v1/register', async (req, res) => {
     await loginModel.create({
       username: username,
       password: hashedPassword,
+      favourite: [],
+      memorized: [],
     });
   } catch (error: unknown) {
     if ((error as {code: number}).code === 11000) {
