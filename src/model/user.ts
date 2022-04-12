@@ -19,6 +19,6 @@ const UserSchema = new mongoose.Schema({
   memorized: {type: [UserWordSchema], required: true},
 }, opts);
 
-const loginModel = mongoose.model('UserSchema', UserSchema);
+const userModel = mongoose.model('UserSchema', UserSchema);
 
-export {loginModel};
+export {userModel};

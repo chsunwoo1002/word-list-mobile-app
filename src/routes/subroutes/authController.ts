@@ -3,7 +3,7 @@ import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
-import {loginModel} from '../../model/user';
+import {userModel} from '../../model/user';
 import {isValidPassword, isValidAuthQuery} from '../../utils/authUtils';
 
 dotenv.config();
@@ -21,7 +21,7 @@ authController.post('/v1/login', async (req, res) => {
   if (!isValidAuthQuery(email, password)) {
     return res.json({status: 'error', error: 'Invalid username/password'});
   }
-  const user = await loginModel.findOne({username: email}).lean();
+  const user = await userModel.findOne({username: email}).lean();
   if (!user) {
     return res.json({status: 'error', error: 'Cannot find username/password'});
   }
@@ -42,7 +42,7 @@ authController.post('/v1/register', async (req, res) => {
   const username = email.toLowerCase();
 
   try {
-    await loginModel.create({
+    await userModel.create({
       username: username,
       password: hashedPassword,
       favourite: [],
@@ -66,14 +66,14 @@ authController.delete('/v1/unregister', async (req, res) => {
   if (!isValidAuthQuery(email, pass)) {
     return res.json({status: 'error', error: 'Invalid username/password'});
   }
-  const user = await loginModel.findOne({username: email}).lean();
+  const user = await userModel.findOne({username: email}).lean();
   if (!user) {
     return res.json({status: 'error', error: 'Invalid username/password'});
   }
   const password = await bcrypt.hash(pass, saltRound);
   const username = email.toLowerCase();
   try {
-    await loginModel.findOneAndDelete({
+    await userModel.findOneAndDelete({
       username,
       password,
     });
@@ -94,7 +94,7 @@ authController.put('/v1/passwordUpdate', async (req, res) => {
   if (!isValidPassword(newPassword)) {
     return res.json({status: 'error', error: 'Invalid new password'});
   }
-  const user = await loginModel.findOne({username: email}).lean();
+  const user = await userModel.findOne({username: email}).lean();
   if (!user) {
     return res.json({status: 'error', error: 'Invalid username/password'});
   }
@@ -103,7 +103,7 @@ authController.put('/v1/passwordUpdate', async (req, res) => {
   }
   const newPass = await bcrypt.hash(newPassword, saltRound);
   try {
-    await loginModel.findOneAndUpdate(
+    await userModel.findOneAndUpdate(
         {username: email}, {password: newPass});
   } catch (error: unknown) {
     return res.json({status: 'error', error: 'Update password failed'});
