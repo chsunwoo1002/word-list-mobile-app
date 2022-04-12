@@ -2,11 +2,11 @@ import PasswordValidator from 'password-validator';
 import * as EmailValidator from 'email-validator';
 
 /**
- * check pass is following the password rule
- * @param {stirng} pass the string of password
- * @return {boolean} Does pass follow the password rule?
+ * check password is following the passwordword rule
+ * @param {stirng} password the string of passwordword
+ * @return {boolean} Does password follow the passwordword rule?
  */
-const validatePasswordRule = (pass:string) => {
+const validatepasswordwordRule = (password:string):boolean => {
   const schema = new PasswordValidator();
   schema
       .is().min(8)
@@ -14,29 +14,39 @@ const validatePasswordRule = (pass:string) => {
       .has().lowercase()
       .has().digits(1)
       .has().not().spaces();
-  return schema.validate(pass);
+  return Boolean(schema.validate(password));
 };
 
 /**
- * check pass element in query body is valid password
- * @param {any} pass the element in query body
- * @return {boolean} Does the pass contain valid format of password?
+ * check password element in query body is valid passwordword
+ * @param {any} password the element in query body
+ * @return {boolean} Does the password contain valid format of passwordword?
  */
-const isValidPassword = (pass: any) => {
-  return Boolean(pass) &&
-         typeof pass === 'string' &&
-         validatePasswordRule(pass);
+const isValidPassword = (password: any):boolean => {
+  return Boolean(password) &&
+         typeof password === 'string' &&
+         validatepasswordwordRule(password);
 };
 
 /**
- * chekc email element in query body is valid email format
+ * check email element in query body is valid email format
  * @param {any} email the email element in query body
- * @return {boolean} Doest the email contain valid format of email?
+ * @return {boolean} Does the email contain valid format of email?
  */
-const isValidEmail = (email: any) => {
+const isValidEmail = (email: any):boolean => {
   return Boolean(email) &&
          typeof email === 'string' &&
          EmailValidator.validate(email);
 };
 
-export {isValidPassword, isValidEmail};
+/**
+ * check https request is valid
+ * @param {any} email the email element in query body
+ * @param {any} password the password element in query body
+ * @return {boolean} Doest json body contains valid format data?
+ */
+const isValidAuthQuery = (email: any, password: any):boolean => {
+  return isValidEmail(email) && isValidPassword(password);
+};
+
+export {isValidPassword, isValidAuthQuery};
