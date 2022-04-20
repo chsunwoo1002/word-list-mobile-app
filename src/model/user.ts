@@ -7,6 +7,7 @@ const opts = {
   },
   collection: 'users',
 };
+
 const UserWordSchema = new mongoose.Schema({
   word: {type: String, required: true, unique: true},
   examples: {type: [String]},

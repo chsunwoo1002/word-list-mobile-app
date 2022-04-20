@@ -4,6 +4,7 @@ import https from 'https';
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
+import cors from 'cors';
 
 import {apiController} from './routes/apiController';
 
@@ -16,6 +17,7 @@ const httpsPort = process.env.HTTPS_PORT;
 app.get('/', (req, res) => {
   res.send('Welcome to server!');
 });
+app.use(cors({origin: true, credential: true}));
 app.use('/api', apiController);
 
 // certificates should be change in production

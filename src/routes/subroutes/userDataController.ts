@@ -19,8 +19,9 @@ userDataController.get('/v1/all', async (req, res) => {
   return res.json(
       {status: 'ok',
         data: {
-          favourite: userWords.favourite,
-          memorized: userWords.memorized}});
+          //favourite: userWords.favourite,
+          //memorized: userWords.memorized
+        }});
 });
 
 userDataController.get('/v1/favourite', async (req, res) => {
@@ -33,7 +34,8 @@ userDataController.get('/v1/favourite', async (req, res) => {
 
   return res.json(
       {status: 'ok',
-        data: {favourite: userWords.favourite}});
+        data: {//favourite: userWords.favourite
+        }});
 });
 
 userDataController.get('/v1/memorized', async (req, res) => {
@@ -46,7 +48,8 @@ userDataController.get('/v1/memorized', async (req, res) => {
 
   return res.json(
       {status: 'ok',
-        data: {memorized: userWords.memorized}});
+        data: {//memorized: userWords.memorized
+        }});
 });
 
 // add/delete word in memorized

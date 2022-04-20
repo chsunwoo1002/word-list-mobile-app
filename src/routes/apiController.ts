@@ -7,6 +7,6 @@ const apiController: Express = express();
 
 apiController.use('/dictionary', dictionaryController);
 apiController.use('/userAuth', authController);
-apiController.use('/userData', userDataController);
+//apiController.use('/userData', userDataController);
 
 export {apiController};
