@@ -49,4 +49,4 @@ const isValidAuthQuery = (email: any, password: any):boolean => {
   return isValidEmail(email) && isValidPassword(password);
 };
 
-export {isValidPassword, isValidAuthQuery};
+export {isValidPassword, isValidEmail, isValidAuthQuery};

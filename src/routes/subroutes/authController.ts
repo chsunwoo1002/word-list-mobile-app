@@ -10,60 +10,66 @@ dotenv.config();
 
 const authController: Express = express();
 const saltRound = 10;
+const dbPath = process.env.MONGO_DB_URL;
 
 // Change to env val
-mongoose.connect('mongodb://localhost:27017/app-db');
+mongoose.connect(dbPath);
 authController.use(bodyParser.json());
 
 authController.post('/v1/login', async (req, res) => {
   const {email, password} = req.body;
 
   if (!isValidAuthQuery(email, password)) {
-    return res.json({status: 'error', error: 'Invalid username/password'});
+    return res.status(200)
+        .json({status: 'error', error: 'Invalid username/password'});
   }
-  const user = await userModel.findOne({username: email}).lean();
-  console.log(user);
-  if (!user) {
-    return res.json({status: 'error', error: 'Cannot find username/password'});
+  try {
+    const user = await userModel.findOne({username: email});
+    const token = await user.generateAuthToken();
+    if (await bcrypt.compare(password, user.password)) {
+      return res.json({status: 'ok', error: null,
+        data: {
+          id: user._id.str,
+          email: email,
+          password: password,
+        },
+        token});
+    }
+  } catch (e) {
+    res.status(400)
+        .json({status: 'error', error: 'Cannot find username/password'}).send();
   }
-  if (await bcrypt.compare(password, user.password)) {
-    return res.json({status: 'ok', error: null,
-      data: {
-        id: user._id.str,
-        email: email,
-        password: password,
-      }});
-  }
-  return res.json({status: 'error', error: 'Cannot find username/password'});
 });
 
 authController.post('/v1/register', async (req, res) => {
-  const {email, password} = req.body;
+  const {email, password, firstName, lastName} = req.body;
 
   if (!isValidAuthQuery(email, password)) {
-    return res.json({status: 'error', error: 'Invalid username/password'});
+    return res.status(400)
+        .json({status: 'error', error: 'Invalid username/password'});
   }
 
   const hashedPassword = await bcrypt.hash(password, saltRound);
   const username = email.toLowerCase();
 
   try {
-    const tmp =await userModel.create({
+    const user = await userModel.create({
       username: username,
       password: hashedPassword,
-      favourite: [],
-      memorized: [],
+      firstName,
+      lastName,
     });
-    console.log(tmp);
+    const token = await user.generateAuthToken();
+    return res.status(400)
+        .json({status: 'ok', message: 'Registration success', token});
   } catch (error: unknown) {
+    console.log(error);
     if ((error as {code: number}).code === 11000) {
-      return res.json(
+      return res.status(400).json(
           {status: 'error', code: 409, error: 'Username already in use'});
     } else {
-      return res.json({status: 'error', error: 'Unknown error in db'});
+      return res.status(400).json({status: 'error', error});
     }
-  } finally {
-    return res.json({status: 'ok', message: 'Registration success'});
   }
 });
 
