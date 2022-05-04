@@ -4,7 +4,10 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import {User} from '../../model/user';
-import {isValidPassword, isValidAuthQuery} from '../../utils/authUtils';
+import {
+  isValidPassword,
+  isValidAuthQuery,
+  isValidEmail} from '../../utils/authUtils';
 import jwt from 'jsonwebtoken';
 
 dotenv.config();
@@ -149,6 +152,29 @@ authController.put('/v1/passwordUpdate', async (req, res) => {
     const user = await User.findByCredentials(email, oldPassword);
     user.setPassword(newPassword);
     return res.json({status: 'ok'});
+  } catch (error) {
+    return res.json({status: 'error', error});
+  }
+});
+
+authController.get('/v1/newAccessToken', async (req, res) => {
+  const {email} = req.body;
+  const refreshToken = req.headers['authorization'];
+
+  if (!isValidEmail(email)) {
+    return res.json({status: 'error', message: 'unvalidEmailAddress'});
+  }
+
+  // check jwt authorization token is valid
+  jwt.verify(refreshToken, JWT_SECRET_KEY, function(error, decoded) {
+    if (error) {
+      res.json({status: 'error', error});
+    }
+  });
+  try {
+    const user = await User.findByEmail(email);
+    const accessToken = user.generateAccessToken();
+    return res.json({status: 'ok', accessToken});
   } catch (error) {
     return res.json({status: 'error', error});
   }

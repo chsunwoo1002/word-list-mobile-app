@@ -35,6 +35,7 @@ interface IUserDocument extends IUser, Document {
 interface UserModel extends Model<IUserDocument> {
   findByCredentials: (email: string, password:string) => Promise<IUserDocument>;
   findByCredentialsAndDelete: (email:string, password:string) => Promise<void>;
+  findByEmail: (email: string) => Promise<IUserDocument>;
 }
 
 // option for scema
@@ -91,6 +92,16 @@ UserSchema.methods.checkPassword = async function(password: string) {
 };
 
 // statics to find the user by email
+UserSchema.statics.findByEmail =
+  async (email: string) => {
+    const user = await User.findOne({email});
+    if (!user) {
+      throw new Error('Cannot find user');
+    }
+    return user;
+  };
+
+// statics to find the user by email with password validation
 UserSchema.statics.findByCredentials =
   async (email: string, password:string) => {
     const user = await User.findOne({email});
