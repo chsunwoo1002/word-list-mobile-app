@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import {User} from '../../model/user';
 import {isValidPassword, isValidAuthQuery} from '../../utils/authUtils';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ dotenv.config();
 const authController: Express = express();
 const saltRound = 10;
 const dbPath = process.env.MONGO_DB_URL;
+const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 // connect to mongo db
 mongoose.connect(dbPath);
@@ -44,7 +46,7 @@ authController.post('/v1/login', async (req, res) => {
             status: 'ok',
             error: null,
             data: {
-              id: user._id.str,
+              id: user._id.toString(),
             },
             refreshToken,
             accessToken,
@@ -84,7 +86,7 @@ authController.post('/v1/register', async (req, res) => {
         .json(
             {
               status: 'ok',
-              data: {id: user._id.str},
+              data: {id: user._id.toString()},
               refreshToken,
               accessToken,
             });
@@ -101,47 +103,54 @@ authController.post('/v1/register', async (req, res) => {
 // delete user information
 authController.delete('/v1/unregister', async (req, res) => {
   const {email, password} = req.body;
+  const token = req.headers['authorization'];
+
+  // check email & password are valid
   if (!isValidAuthQuery(email, password)) {
     return res.json({status: 'error', error: 'Invalid username/password'});
   }
+
+  // check jwt authorization token is valid
+  jwt.verify(token, JWT_SECRET_KEY, function(error, _) {
+    if (error) {
+      res.json({status: 'error', error});
+    }
+  });
+
   try {
-    const user = await User.findByCredentials(email, password);
-    await User.findOneAndDelete({
-      username,
-      password,
-    });
-  } catch (error: unknown) {
+    await User.findByCredentialsAndDelete(email, password);
+  } catch (error) {
     return res.json(
-        {status: 'error', code: 404, error: 'Not found user data'},
+        {status: 'error', code: 404, error},
     );
   } finally {
     return res.json({status: 'ok', emssage: 'Unregistration success'});
   }
 });
 
+// update password
 authController.put('/v1/passwordUpdate', async (req, res) => {
   const {email, oldPassword, newPassword} = req.body;
-  if (!isValidAuthQuery(email, oldPassword)) {
-    return res.json({status: 'error', error: 'Invalid username/password'});
+  const token = req.headers['authorization'];
+
+  // check email & password are valid
+  if (!isValidAuthQuery(email, oldPassword) || !isValidPassword(newPassword)) {
+    return res.json({status: 'error', error: 'Invalid username/(new)password'});
   }
-  if (!isValidPassword(newPassword)) {
-    return res.json({status: 'error', error: 'Invalid new password'});
-  }
-  const user = await User.findOne({username: email}).lean();
-  if (!user) {
-    return res.json({status: 'error', error: 'Invalid username/password'});
-  }
-  if (!await bcrypt.compare(oldPassword, user.password)) {
-    return res.json({status: 'error', error: 'Invalid username/password'});
-  }
-  const newPass = await bcrypt.hash(newPassword, saltRound);
+
+  // check jwt authorization token is valid
+  jwt.verify(token, JWT_SECRET_KEY, function(error, decoded) {
+    if (error) {
+      res.json({status: 'error', error});
+    }
+  });
+
   try {
-    await User.findOneAndUpdate(
-        {username: email}, {password: newPass});
-  } catch (error: unknown) {
-    return res.json({status: 'error', error: 'Update password failed'});
-  } finally {
-    return res.json({status: 'ok', message: 'Update password success'});
+    const user = await User.findByCredentials(email, oldPassword);
+    user.setPassword(newPassword);
+    return res.json({status: 'ok'});
+  } catch (error) {
+    return res.json({status: 'error', error});
   }
 });
 

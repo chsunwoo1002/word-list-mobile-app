@@ -28,11 +28,13 @@ interface IUserDocument extends IUser, Document {
   generateAccessToken: () => Promise<string>;
   generateRefreshToken: () => Promise<string>;
   checkPassword: (password:string) => Promise<boolean>;
+  setPassword: (password:string) => Promise<void>;
 }
 
 // interface for Model
 interface UserModel extends Model<IUserDocument> {
   findByCredentials: (email: string, password:string) => Promise<IUserDocument>;
+  findByCredentialsAndDelete: (email:string, password:string) => Promise<void>;
 }
 
 // option for scema
@@ -64,7 +66,7 @@ const UserSchema = new mongoose.Schema({
 UserSchema.methods.generateAccessToken = async function() {
   const expiresIn = 60 * 15;
   const token = jwt.sign(
-      {_id: this._id.str}, JWT_SECRET_KEY, {expiresIn});
+      {_id: this._id.toString()}, JWT_SECRET_KEY, {expiresIn});
   return token;
 };
 
@@ -72,8 +74,14 @@ UserSchema.methods.generateAccessToken = async function() {
 UserSchema.methods.generateRefreshToken = async function() {
   const expiresIn = '90d';
   const token = jwt.sign(
-      {_id: this._id.str}, JWT_SECRET_KEY, {expiresIn});
+      {_id: this._id.toString()}, JWT_SECRET_KEY, {expiresIn});
   return token;
+};
+
+// method to set new password
+UserSchema.methods.setPassword = async function(password: string) {
+  const hash = await bcrypt.hash(password, 10);
+  this.password = hash;
 };
 
 // method to check password
@@ -98,7 +106,19 @@ UserSchema.statics.findByCredentials =
 
 UserSchema.statics.findByCredentialsAndDelete =
   async (email: string, password:string) => {
-    
+    const user = await User.findOne({email});
+    if (!user) {
+      throw new Error('Cannot delete your account');
+    }
+    const isMatch = await user.checkPassword(password);
+    if (!isMatch) {
+      throw new Error('Cannot delete your account');
+    }
+    try {
+      await User.deleteOne({email});
+    } catch (error) {
+      throw new Error('Cannot delete your account');
+    }
   };
 
 const User = mongoose.model<IUserDocument, UserModel>('UserSchema', UserSchema);
