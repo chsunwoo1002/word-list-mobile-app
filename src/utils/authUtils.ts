@@ -49,4 +49,20 @@ const isValidAuthQuery = (email: any, password: any):boolean => {
   return isValidEmail(email) && isValidPassword(password);
 };
 
-export {isValidPassword, isValidEmail, isValidAuthQuery};
+const messages = {
+  ok: {
+    login: 'LoginSuccess',
+    register: 'RegisterSucess',
+    unregister: 'SuccessUnregister',
+    passwordUpdate: 'PasswordUpdateSuccess',
+    newAccessToken: 'SuccessToGenerateAccessToken',
+  },
+  error: {
+    notFoundUser: 'NotFoundUser',
+    invalidInput: 'InvalidInput',
+    usernameInUse: 'UsernameInUse',
+    notGenerateToken: 'NotGenerateAccessToken',
+  },
+};
+
+export {isValidPassword, isValidEmail, isValidAuthQuery, messages};

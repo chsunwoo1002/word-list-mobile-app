@@ -7,7 +7,9 @@ import {User} from '../../model/user';
 import {
   isValidPassword,
   isValidAuthQuery,
-  isValidEmail} from '../../utils/authUtils';
+  isValidEmail,
+  messages,
+} from '../../utils/authUtils';
 import jwt from 'jsonwebtoken';
 
 dotenv.config();
@@ -31,8 +33,8 @@ authController.post('/v1/login', async (req, res) => {
   // check email/password format is correct
   if (!isValidAuthQuery(email, password)) {
     return res
-        .status(200)
-        .json({status: 'error', error: 'Invalid username/password'});
+        .status(401)
+        .json({status: 'error', message: messages.error.invalidInput});
   }
 
   // try get user collection from db
@@ -44,19 +46,23 @@ authController.post('/v1/login', async (req, res) => {
     const isPasswordMatched = await user.checkPassword(password);
 
     if (isPasswordMatched) {
-      return res.json(
-          {
-            status: 'ok',
-            error: null,
-            data: {
-              id: user._id.toString(),
-            },
-            refreshToken,
-            accessToken,
-          });
+      return res
+          .status(200)
+          .json(
+              {
+                status: 'ok',
+                message: messages.ok.login,
+                data: {
+                  id: user._id.toString(),
+                },
+                refreshToken,
+                accessToken,
+              });
     }
-  } catch (error) { // if error occurs, send error with 400
-    return res.status(400).json({status: 'error', error});
+  } catch (e) {
+    return res
+        .status(401)
+        .json({status: 'error', message: messages.error.notFoundUser});
   }
 });
 
@@ -66,8 +72,9 @@ authController.post('/v1/register', async (req, res) => {
 
   // check email/password format is correct
   if (!isValidAuthQuery(email, password)) {
-    return res.status(400)
-        .json({status: 'error', error: 'Invalid username/password'});
+    return res
+        .status(400)
+        .json({status: 'error', message: messages.error.invalidInput});
   }
 
   // hash password to persist in db
@@ -85,21 +92,19 @@ authController.post('/v1/register', async (req, res) => {
     const refreshToken = await user.generateRefreshToken();
     const accessToken = await user.generateAccessToken();
     return res
-        .status(400)
+        .status(200)
         .json(
             {
               status: 'ok',
+              message: messages.ok.register,
               data: {id: user._id.toString()},
               refreshToken,
               accessToken,
             });
   } catch (error) {
-    if ((error as {code: number}).code === 11000) {
-      return res.status(400).json(
-          {status: 'error', code: 409, error: 'Username already in use'});
-    } else {
-      return res.status(400).json({status: 'error', error});
-    }
+    return res
+        .status(409)
+        .json({status: 'error', message: messages.error.usernameInUse});
   }
 });
 
@@ -110,24 +115,28 @@ authController.delete('/v1/unregister', async (req, res) => {
 
   // check email & password are valid
   if (!isValidAuthQuery(email, password)) {
-    return res.json({status: 'error', error: 'Invalid username/password'});
+    return res
+        .status(400)
+        .json({status: 'error', message: messages.error.invalidInput});
   }
-
+  // eslint-disable-next-line max-len
+  // jwt error.name = 'TokenExpiredError' || 'NotBeforeError' || 'JsonWebTokenError'
   // check jwt authorization token is valid
   jwt.verify(token, JWT_SECRET_KEY, function(error, _) {
     if (error) {
-      res.json({status: 'error', error});
+      res.status(401).json({status: 'error', message: error.name});
     }
   });
 
   try {
     await User.findByCredentialsAndDelete(email, password);
+    return res
+        .status(200)
+        .json({status: 'ok', message: messages.ok.unregister});
   } catch (error) {
-    return res.json(
-        {status: 'error', code: 404, error},
-    );
-  } finally {
-    return res.json({status: 'ok', emssage: 'Unregistration success'});
+    return res
+        .status(401)
+        .json({status: 'error', message: messages.error.notFoundUser});
   }
 });
 
@@ -138,22 +147,28 @@ authController.put('/v1/passwordUpdate', async (req, res) => {
 
   // check email & password are valid
   if (!isValidAuthQuery(email, oldPassword) || !isValidPassword(newPassword)) {
-    return res.json({status: 'error', error: 'Invalid username/(new)password'});
+    return res
+        .status(401)
+        .json({status: 'error', message: messages.error.invalidInput});
   }
 
   // check jwt authorization token is valid
-  jwt.verify(token, JWT_SECRET_KEY, function(error, decoded) {
+  jwt.verify(token, JWT_SECRET_KEY, function(error, _) {
     if (error) {
-      res.json({status: 'error', error});
+      res.status(401).json({status: 'error', message: error.name});
     }
   });
 
   try {
     const user = await User.findByCredentials(email, oldPassword);
     user.setPassword(newPassword);
-    return res.json({status: 'ok'});
+    return res
+        .status(200)
+        .json({status: 'ok', meesage: messages.ok.passwordUpdate});
   } catch (error) {
-    return res.json({status: 'error', error});
+    return res
+        .status(401)
+        .json({status: 'error', message: messages.error.notFoundUser});
   }
 });
 
@@ -162,21 +177,27 @@ authController.get('/v1/newAccessToken', async (req, res) => {
   const refreshToken = req.headers['authorization'];
 
   if (!isValidEmail(email)) {
-    return res.json({status: 'error', message: 'unvalidEmailAddress'});
+    return res
+        .status(401)
+        .json({status: 'error', message: messages.error.invalidInput});
   }
 
   // check jwt authorization token is valid
-  jwt.verify(refreshToken, JWT_SECRET_KEY, function(error, decoded) {
+  jwt.verify(refreshToken, JWT_SECRET_KEY, function(error, _) {
     if (error) {
-      res.json({status: 'error', error});
+      res.status(401).json({status: 'error', message: error.name});
     }
   });
   try {
     const user = await User.findByEmail(email);
     const accessToken = user.generateAccessToken();
-    return res.json({status: 'ok', accessToken});
+    return res
+        .status(200)
+        .json({status: 'ok', message: messages.ok.newAccessToken, accessToken});
   } catch (error) {
-    return res.json({status: 'error', error});
+    return res
+        .status(401)
+        .json({status: 'error', message: messages.error.notFoundUser});
   }
 });
 
